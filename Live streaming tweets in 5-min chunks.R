@@ -5,17 +5,15 @@ library(tidytext)
 library(lubridate)
 
 # Loop streaming for 5-minute intervals -----------------------------------
-streamBBC <- function(t=60) { # t is the time-duration of show
-  p <- ceiling(t/5)
-  for (x in 1:p){
-    sTime <- now() %>% 
-      as.character(paste0(hour(.), minute(.)))
-    eTime <- (now()+5*60) %>% 
-      as.character(paste0(hour(.), minute(.)))
-    bbcqt <- stream_tweets("#bbcqt",
-                           timeout=60*5,
-                           file_name = paste0("bbcqt", sTime, "-", eTime, ".json"))
+streamInBlocks <- function(t=60, m=5, tag="bbcqt") {  # t is the time-duration of show
+  p <- ceiling(t/m)                                   # m is the length of the slots
+  for (x in 1:p){                                     # tag is the hashtag (no hash)
+    seTime <- now() %>% 
+      as.character(paste0(hour(.), minute(.), "-", hour(.), minute(.)+m))
+    bbcqt <- stream_tweets(paste0("#", tag),
+                           timeout=60*m,
+                           file_name = paste0(tag, seTime, ".json"))
   }
 }
 
-streamBBC(5)
+streamInBlocks(5)
