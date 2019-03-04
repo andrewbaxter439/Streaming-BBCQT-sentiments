@@ -4,22 +4,22 @@ library(gganimate)
 library(tidytext)
 library(lubridate)
 library(twitteR)
+library(magick)
 
 
 # Create graphs and tweet ------------------------------------------------------------------------------------
 
 ## Run in new session!
 
-graphBBC <- function (t=60, tag="bbcqt") { # t is the length of the programme in minutes
-  p <- ceiling(t/5)
+graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE) { # t is the length of the programme in minutes
+  p <- ceiling(t/m)
   i = 0
   while (i < p){
     repeat {
-      filenames <- list.files()
-      seTime <- (now()-6*60) %>% 
-        as.character(paste0(hour(.), minute(.), "-", hour(.), minute(.)+5))
+      filenames <- list.files("tweet files/")
+      seTime <- paste(format(now()-(m+1)*60, "%H%M"), format(now()-60, "%H%M"), sep="-")
       if (any(grepl(seTime, filenames))){
-        bbcQTFile <- paste0(tag, seTime, ".json")
+        bbcQTFile <- paste0("tweet files/", tag, seTime, ".json")
         seTime <- seTime
         break
       }
@@ -106,7 +106,7 @@ graphBBC <- function (t=60, tag="bbcqt") { # t is the length of the programme in
     SenMgif <- image_read(Sengif)
     
     joingif <- image_append(c(SenMgif[1], pnMgif[1]))
-    for (i in 2:100){
+    for (i in 2:200){
       combined <- image_append(c(SenMgif[i], pnMgif[i]))
       joingif <- c(joingif, combined)
     }
@@ -131,17 +131,61 @@ graphBBC <- function (t=60, tag="bbcqt") { # t is the length of the programme in
       count(value) %>% 
       arrange(desc(n)) %>% 
       filter(!grepl("^bbc", value, ignore.case = TRUE)) %>% 
-      top_n(3) %>% 
+      top_n(3)[1] %>% 
       pull(value)
     
+    tweet_message <- paste0("Graphing how folks are feeling on Twitter ", seTime, " watching #",
+                            tag,
+                            " in the last ", m, " minutes.\n\n",
+                            "Top mentions:\n@", topMentions[1], 
+                            "\n@", topMentions[2],
+                            "\n@", topMentions[3],
+                            "\n\nTop Hastag: #", topHash[1])
     
-    updateStatus(paste0("Graphing how folks are feeling on Twitter watching #",
-                        tag,
-                        " in the last five minutes.\n\n",
-                        "Top mentions:\n@", topMentions[1], 
-                        "/n@", topMentions[2],
-                        "/n@", topMentions[3],
-                        "/n/nTop Hastag: #", topHash),
+    if (tweet){
+    updateStatus(tweet_message,
                  mediaPath=paste0("gifs/", tag, seTime, ".gif"))
+    } else {
+      print(tweet_message)
+    }
   }
 }
+
+# Trial after running failed first time ----------------------------------------------------------------------
+
+bbcqt <- parse_stream("tweet files/mondaymotivation2152-2157.json")
+topHash <- bbcqt %>%
+  filter(is_quote==FALSE, is_retweet==FALSE, !is.na(hashtags)) %>%
+  pull(hashtags) %>%
+  unlist() %>%
+  enframe() %>%
+  count(value) %>%
+  arrange(desc(n)) %>%
+  filter(!grepl("mondaymotivation", value, ignore.case = TRUE)) %>%
+  top_n(1) %>% 
+  pull(value)
+
+# topMentions <- bbcqt %>% 
+#   filter(is_quote==FALSE, is_retweet==FALSE, !is.na(mentions_screen_name)) %>% 
+#   pull(mentions_screen_name) %>% 
+#   unlist() %>% 
+#   enframe() %>% 
+#   count(value) %>% 
+#   arrange(desc(n)) %>% 
+#   filter(!grepl("^bbc", value, ignore.case = TRUE)) %>% 
+#   top_n(3) %>% 
+#   pull(value)
+# 
+# updateStatus(paste0("Graphing how folks are feeling on Twitter watching #",
+#                     tag,
+#                     " in the last five minutes.\n\n",
+#                     "Top mentions:\n@", topMentions[1], 
+#                     "\n@", topMentions[2],
+#                     "\n@", topMentions[3],
+#                     "\n\nTop Hastag: #", topHash),
+#              mediaPath="gifs/mondaymotivation167-1612.gif", bypassCharLimit = TRUE)
+# 
+# updateStatus("I think I'll have to add to my website my skills in tweeting from R, in particular the odd things one can do with gps points...",
+#              lat = "0", long = "-45", displayCoords = TRUE,
+#              inReplyTo = get_timeline("andybaxter", n=1) %>% pull(status_id))
+#              
