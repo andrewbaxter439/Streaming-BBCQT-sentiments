@@ -11,7 +11,7 @@ library(magick)
 
 ## Run in new session!
 
-graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE) { # t is the length of the programme in minutes
+graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALSE) { # t is the length of the programme in minutes
   p <- ceiling(t/m)
   i = 0
   while (i < p){
@@ -144,7 +144,10 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE) { # t is t
     
     if (tweet){
     updateStatus(tweet_message,
-                 mediaPath=paste0("gifs/", tag, seTime, ".gif"))
+                 mediaPath=paste0("gifs/", tag, seTime, ".gif"),
+                 inReplyTo = ifelse(reply=TRUE,
+                                    get_timeline("andybaxter", n=1) %>% pull(status_id),
+                                    NULL))
     } else {
       print(tweet_message)
     }
@@ -152,18 +155,18 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE) { # t is t
 }
 
 # Trial after running failed first time ----------------------------------------------------------------------
-
-bbcqt <- parse_stream("tweet files/mondaymotivation2152-2157.json")
-topHash <- bbcqt %>%
-  filter(is_quote==FALSE, is_retweet==FALSE, !is.na(hashtags)) %>%
-  pull(hashtags) %>%
-  unlist() %>%
-  enframe() %>%
-  count(value) %>%
-  arrange(desc(n)) %>%
-  filter(!grepl("mondaymotivation", value, ignore.case = TRUE)) %>%
-  top_n(1) %>% 
-  pull(value)
+# 
+# bbcqt <- parse_stream("tweet files/mondaymotivation2152-2157.json")
+# topHash <- bbcqt %>%
+#   filter(is_quote==FALSE, is_retweet==FALSE, !is.na(hashtags)) %>%
+#   pull(hashtags) %>%
+#   unlist() %>%
+#   enframe() %>%
+#   count(value) %>%
+#   arrange(desc(n)) %>%
+#   filter(!grepl("mondaymotivation", value, ignore.case = TRUE)) %>%
+#   top_n(1) %>% 
+#   pull(value)
 
 # topMentions <- bbcqt %>% 
 #   filter(is_quote==FALSE, is_retweet==FALSE, !is.na(mentions_screen_name)) %>% 
