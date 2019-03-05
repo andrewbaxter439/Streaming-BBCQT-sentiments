@@ -1,3 +1,4 @@
+# packages ---------------------------------------------------------------------------------------------------
 library(rtweet)
 library(tidyverse)
 library(gganimate)
@@ -7,6 +8,8 @@ library(twitteR)
 library(magick)
 
 
+
+
 # Create graphs and tweet ------------------------------------------------------------------------------------
 
 ## Run in new session!
@@ -14,7 +17,7 @@ library(magick)
 graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALSE) { # t is the length of the programme in minutes
   p <- ceiling(t/m)
   i = 0
-  while (i < p){
+  while (i < p) {
     repeat {
       filenames <- list.files("tweet files/")
       seTime <- paste(format(now()-(m+1)*60, "%H%M"), format(now()-60, "%H%M"), sep="-")
@@ -27,19 +30,18 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
     i <- i+1
     bbcqt <- parse_stream(bbcQTFile)
     bbcqt %>% 
-      mutate(min=paste(hour(created_at), minute(created_at), sep=":")) %>% 
-      group_by(min) %>% 
+      mutate(time=format(created_at, "%H:%M")) %>% 
+      group_by(time) %>% 
       unnest_tokens(word, text) %>%
       ungroup() %>% 
-      select(min, word) %>% 
+      select(time, word) %>% 
       inner_join(get_sentiments("nrc")) %>%
-      group_by(min, sentiment) %>% 
+      group_by(time, sentiment) %>% 
       add_tally() %>% 
       summarise(total=sum(n)) %>% 
-      group_by(min) %>% 
+      group_by(time) %>% 
       filter(sentiment!="negative", sentiment!="positive") %>% 
-      mutate(time=min,
-             share=total/sum(total)) %>% 
+      mutate(share=total/sum(total)) %>% 
       ggplot(aes(x=1, y=share, fill=sentiment, label=sentiment))+
       geom_bar(stat="identity", position="fill")+
       coord_polar(theta = "y") +
@@ -68,19 +70,18 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
     # positive or negative bar -----------------------------------------------------------------------------------
     
     bbcqt %>% 
-      mutate(min=paste(hour(created_at), minute(created_at), sep=":")) %>% 
-      group_by(min) %>% 
+      mutate(time=format(created_at, "%H:%M")) %>% 
+      group_by(time) %>% 
       unnest_tokens(word, text) %>%
       ungroup() %>% 
-      select(min, word) %>% 
+      select(time, word) %>% 
       inner_join(get_sentiments("nrc")) %>%
-      group_by(min, sentiment) %>% 
+      group_by(time, sentiment) %>% 
       add_tally() %>% 
       summarise(total=sum(n)) %>% 
-      group_by(min) %>% 
+      group_by(time) %>% 
       filter(sentiment=="negative" | sentiment=="positive") %>% 
-      mutate(time = min,
-             total=ifelse(sentiment=="negative", total*-1, total)) %>% 
+      mutate(total=ifelse(sentiment=="negative", total*-1, total)) %>% 
       group_by(sentiment) %>% 
       mutate(labpos=mean(total)/2) %>% 
       ggplot(aes(x=1, y=total, fill=sentiment)) +
@@ -106,8 +107,8 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
     SenMgif <- image_read(Sengif)
     
     joingif <- image_append(c(SenMgif[1], pnMgif[1]))
-    for (i in 2:200){
-      combined <- image_append(c(SenMgif[i], pnMgif[i]))
+    for (j in 2:200){
+      combined <- image_append(c(SenMgif[j], pnMgif[j]))
       joingif <- c(joingif, combined)
     }
     
@@ -121,7 +122,8 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
       count(value) %>% 
       arrange(desc(n)) %>% 
       filter(!grepl(tag, value, ignore.case = TRUE)) %>% 
-      top_n(1)
+      top_n(1) %>% 
+      pull(value)
     
     topMentions <- bbcqt %>% 
       filter(is_quote==FALSE, is_retweet==FALSE, !is.na(mentions_screen_name)) %>% 
@@ -131,7 +133,7 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
       count(value) %>% 
       arrange(desc(n)) %>% 
       filter(!grepl("^bbc", value, ignore.case = TRUE)) %>% 
-      top_n(3)[1] %>% 
+      top_n(3) %>% 
       pull(value)
     
     tweet_message <- paste0("Graphing how folks are feeling on Twitter ", seTime, " watching #",
@@ -140,14 +142,15 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
                             "Top mentions:\n@", topMentions[1], 
                             "\n@", topMentions[2],
                             "\n@", topMentions[3],
-                            "\n\nTop Hastag: #", topHash[1])
+                            "\n\nTop Hashtag: #", topHash[1])
     
     if (tweet){
     updateStatus(tweet_message,
                  mediaPath=paste0("gifs/", tag, seTime, ".gif"),
                  inReplyTo = ifelse(reply=TRUE,
                                     get_timeline("andybaxter", n=1) %>% pull(status_id),
-                                    NULL))
+                                    NULL),
+                 bypassCharLimit = TRUE)
     } else {
       print(tweet_message)
     }
@@ -156,7 +159,7 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
 
 # Trial after running failed first time ----------------------------------------------------------------------
 # 
-# bbcqt <- parse_stream("tweet files/mondaymotivation2152-2157.json")
+# bbcqt <- parse_stream("tweet files/mondaymotivation2303-2308.json")
 # topHash <- bbcqt %>%
 #   filter(is_quote==FALSE, is_retweet==FALSE, !is.na(hashtags)) %>%
 #   pull(hashtags) %>%
@@ -165,7 +168,7 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
 #   count(value) %>%
 #   arrange(desc(n)) %>%
 #   filter(!grepl("mondaymotivation", value, ignore.case = TRUE)) %>%
-#   top_n(1) %>% 
+#   top_n(1) %>%
 #   pull(value)
 
 # topMentions <- bbcqt %>% 
