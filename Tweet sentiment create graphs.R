@@ -100,8 +100,8 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
     
     # animate and join -------------------------------------------------------------------------------------------
     
-    PNgif <- animate(positiveThoughts, duration=10, fps=20, width=100, height=700)
-    Sengif <- animate(sentimation, duration=10, fps=20,width = 700, height=700)
+    PNgif <- animate(positiveThoughts, duration=10, fps=20, end_pause = 10, width=100, height=700)
+    Sengif <- animate(sentimation, duration=10, fps=20, end_pause = 10, width = 700, height=700)
     
     pnMgif <- image_read(PNgif)
     SenMgif <- image_read(Sengif)
