@@ -8,7 +8,7 @@ seTime <- gsub("(^.*)(\\d\\d\\d\\d-\\d\\d\\d\\d)(.*$)", "\\2",filename)
     ungroup() %>% 
     select(time, word) %>% 
     inner_join(get_sentiments("nrc")) %>%
-    group_by(time, word, sentiment, nsec) %>% 
+    group_by(time, word, sentiment) %>% 
     summarise(total=n()) %>% 
     group_by(time, sentiment) %>% 
     summarise(total=sum(total))%>% 

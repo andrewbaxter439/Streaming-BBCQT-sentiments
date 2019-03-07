@@ -36,7 +36,7 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
       ungroup() %>% 
       select(time, word) %>% 
       inner_join(get_sentiments("nrc")) %>%
-      group_by(time, word, sentiment, nsec) %>% 
+      group_by(time, word, sentiment) %>% 
       summarise(total=n()) %>% 
       group_by(time, sentiment) %>% 
       summarise(total=sum(total)) %>% 
