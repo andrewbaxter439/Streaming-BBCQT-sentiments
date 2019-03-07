@@ -123,7 +123,7 @@ seTime <- gsub("(^.*)(\\d\\d\\d\\d-\\d\\d\\d\\d)(.*$)", "\\2",filename)
   if (tweet){
     updateStatus(tweet_message,
                  mediaPath=paste0("gifs/", tag, seTime, ".gif"),
-                 inReplyTo = ifelse(reply=TRUE,
+                 inReplyTo = ifelse(reply==TRUE,
                                     get_timeline("andybaxter", n=1) %>% pull(status_id),
                                     NULL),
                  bypassCharLimit = TRUE)

@@ -14,7 +14,7 @@ library(magick)
 
 ## Run in new session!
 
-graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALSE, height=500, width=600) { # t is the length of the programme in minutes
+graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=TRUE, height=500, width=600) { # t is the length of the programme in minutes
   p <- ceiling(t/m)
   i = 0
   while (i < p) {
@@ -149,9 +149,9 @@ graphTweetSentiments <- function (t=60, m=5, tag="bbcqt", tweet=TRUE, reply=FALS
     if (tweet){
     updateStatus(tweet_message,
                  mediaPath=paste0("gifs/", tag, seTime, ".gif"),
-                 inReplyTo = ifelse(reply=TRUE,
+                 inReplyTo = ifelse(reply==TRUE,
                                     get_timeline("andybaxter", n=1) %>% pull(status_id),
-                                    NULL),
+                                    NA),
                  bypassCharLimit = TRUE)
     } else {
       print(tweet_message)
